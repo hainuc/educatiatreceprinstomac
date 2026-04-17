@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Harta Masa în Școală — Argeș 2026</title>
+<meta name="description" content="Transparență despre programul de masă în școli (PNMS) în județul Argeș. Vezi dacă comuna ta are licitație, mâncare caldă sau sandvișuri."/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+:root {
+  --green:      #1D9E75;
+  --green-light:#E1F5EE;
+  --green-dark: #0F6E56;
+  --amber:      #BA7517;
+  --amber-light:#FAEEDA;
+  --red:        #E24B4A;
+  --red-light:  #FCEBEB;
+  --blue:       #185FA5;
+  --blue-light: #E6F1FB;
+  --gray:       #888780;
+  --gray-light: #F4F2EC;
+  --ink:        #1C1B18;
+  --ink2:       #4A4A45;
+  --ink3:       #8A8880;
+  --cream:      #FAFAF7;
+  --white:      #FFFFFF;
+  --border:     rgba(0,0,0,0.09);
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+  --shadow:     0 2px 12px rgba(0,0,0,0.07);
+  --shadow-md:  0 4px 24px rgba(0,0,0,0.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 60px;
+}
+
+.logo-mark {
+  width: 34px; height: 34px;
+  background: var(--green);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo-mark svg { width: 18px; height: 18px; fill: white; }
+
+.logo-text { display: flex; flex-direction: column; }
+.logo-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.logo-sub {
+  font-size: 11px;
+  color: var(--ink3);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+.header-spacer { flex: 1; }
+
+.header-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--green-light);
+  color: var(--green-dark);
+  border: 1px solid rgba(29,158,117,0.2);
+}
+
+/* ── LAYOUT ── */
+.app-wrap {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: calc(100vh - 60px);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-section:last-child { border-bottom: none; }
+
+.section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 12px;
+}
+
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-card {
+  background: var(--gray-light);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--ink3);
+  font-weight: 400;
+}
+
+/* Filters */
+.filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--ink2);
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.filter-btn:hover { background: var(--gray-light); }
+
+.filter-btn.active {
+  border-color: var(--green);
+  background: var(--green-light);
+  color: var(--green-dark);
+  font-weight: 500;
+}
+
+.filter-dot {
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.filter-count {
+  margin-left: auto;
+  font-size: 11px;
+  background: var(--gray-light);
+  color: var(--ink3);
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 400;
+}
+
+.filter-btn.active .filter-count {
+  background: rgba(29,158,117,0.15);
+  color: var(--green-dark);
+}
+
+/* Legend */
+.legend-list { display: flex; flex-direction: column; gap: 8px; }
+.legend-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink2); }
+.legend-swatch {
+  width: 24px; height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Status comune list */
+.comune-list { display: flex; flex-direction: column; gap: 1px; }
+
+.comuna-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.comuna-row:hover { background: var(--gray-light); }
+
+.comuna-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.comuna-name { font-size: 12px; color: var(--ink2); flex: 1; }
+.comuna-beneficiari { font-size: 11px; color: var(--ink3); }
+
+/* Data source note */
+.data-note {
+  font-size: 11px;
+  color: var(--ink3);
+  line-height: 1.6;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+.data-note a { color: var(--green); text-decoration: none; }
+.data-note a:hover { text-decoration: underline; }
+
+/* ── MAP ── */
+#map {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* ── STATUS BAR ── */
+#status-bar {
+  position: absolute;
+  top: 72px;
+  left: 336px;
+  z-index: 800;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--ink3);
+  box-shadow: var(--shadow);
+  max-width: 360px;
+  transition: opacity 0.3s;
+}
+
+#status-bar.hidden { opacity: 0; pointer-events: none; }
+
+/* ── POPUP ── */
+.lf-popup .leaflet-popup-content-wrapper {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+  border: 1px solid var(--border) !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+.lf-popup .leaflet-popup-content { margin: 0 !important; min-width: 230px; }
+.lf-popup .leaflet-popup-tip { background: var(--white) !important; }
+
+.popup-inner { padding: 16px 18px; }
+.popup-header {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.popup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  padding: 4px 0;
+  color: var(--ink2);
+}
+.popup-label { color: var(--ink3); font-size: 12px; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.badge-green { background: var(--green-light); color: var(--green-dark); }
+.badge-amber { background: var(--amber-light); color: var(--amber); }
+.badge-red   { background: var(--red-light);   color: var(--red); }
+.badge-gray  { background: var(--gray-light);  color: var(--gray); }
+.badge-blue  { background: var(--blue-light);  color: var(--blue); }
+
+.popup-footer {
+  background: var(--gray-light);
+  padding: 8px 18px;
+  font-size: 10.5px;
+  color: var(--ink3);
+  border-top: 1px solid var(--border);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .app-wrap { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .sidebar { height: auto; max-height: 40vh; }
+  #status-bar { left: 12px; top: auto; bottom: 12px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+  </div>
+  <div class="logo-text">
+    <span class="logo-title">Masa în Școală</span>
+    <span class="logo-sub">Transparență PNMS · Argeș</span>
+  </div>
+  <div class="header-spacer"></div>
+  <span class="header-badge">Date 2026</span>
+</header>
+
+<div class="app-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- Stats -->
+    <div class="sidebar-section">
+      <div class="section-title">Situație județ</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-num" id="st-total">33</span>
+          <span class="stat-label">unități PNMS</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="st-copii">12.263</span>
+          <span class="stat-label">copii beneficiari</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="st-licit">—</span>
+          <span class="stat-label">cu licitație</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="st-pct">0%</span>
+          <span class="stat-label">date completate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="sidebar-section">
+      <div class="section-title">Filtrează</div>
+      <div class="filter-list">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">
+          <span class="filter-dot" style="background:#B4B2A9"></span>
+          Toate comunele PNMS
+          <span class="filter-count" id="fc-all">33</span>
+        </button>
+        <button class="filter-btn" data-filter="calda" onclick="setFilter(this)">
+          <span class="filter-dot" style="background:#1D9E75"></span>
+          Mâncare caldă
+          <span class="filter-count" id="fc-calda">0</span>
+        </button>
+        <button class="filter-btn" data-filter="sandvis" onclick="setFilter(this)">
+          <span class="filter-dot" style="background:#BA7517"></span>
+          Sandvișuri
+          <span class="filter-count" id="fc-sandvis">0</span>
+        </button>
+        <button class="filter-btn" data-filter="licit_da" onclick="setFilter(this)">
+          <span class="filter-dot" style="background:#185FA5"></span>
+          Licitație făcută (DA)
+          <span class="filter-count" id="fc-licit_da">0</span>
+        </button>
+        <button class="filter-btn" data-filter="licit_nu" onclick="setFilter(this)">
+          <span class="filter-dot" style="background:#E24B4A"></span>
+          Fără licitație (NU)
+          <span class="filter-count" id="fc-licit_nu">0</span>
+        </button>
+        <button class="filter-btn" data-filter="necompletat" onclick="setFilter(this)">
+          <span class="filter-dot" style="background:#D3D1C7"></span>
+          Necompletate
+          <span class="filter-count" id="fc-necompletat">33</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="sidebar-section">
+      <div class="section-title">Legendă culori</div>
+      <div class="legend-list">
+        <div class="legend-row"><span class="legend-swatch" style="background:#1D9E75"></span>Mâncare caldă</div>
+        <div class="legend-row"><span class="legend-swatch" style="background:#BA7517"></span>Sandvișuri</div>
+        <div class="legend-row"><span class="legend-swatch" style="background:#185FA5"></span>Licitație DA (tip necunoscut)</div>
+        <div class="legend-row"><span class="legend-swatch" style="background:#E24B4A"></span>Fără licitație PNMS</div>
+        <div class="legend-row"><span class="legend-swatch" style="background:#B4B2A9"></span>Date necompletate</div>
+        <div class="legend-row"><span class="legend-swatch" style="background:#E8E6DE; border: 1px solid #ccc"></span>Altă comună Argeș</div>
+      </div>
+    </div>
+
+    <!-- Comune list -->
+    <div class="sidebar-section" style="flex:1">
+      <div class="section-title">Comune în PNMS 2026</div>
+      <div class="comune-list" id="comune-list"></div>
+    </div>
+
+    <!-- Data note -->
+    <div class="data-note">
+      Date PNMS 2026: Ministerul Educației · Limite UAT: © OpenStreetMap contributors ·
+      Licitații: introduse manual din SEAP/ANAP ·
+      <a href="https://asociatiaparleaz.ro" target="_blank">Asociația Pârleaz</a>
+    </div>
+
+  </aside>
+
+  <!-- MAP CONTAINER -->
+  <div style="position:relative; overflow:hidden;">
+    <div id="map"></div>
+    <div id="status-bar">Se încarcă limitele administrative...</div>
+  </div>
+
+</div><!-- /app-wrap -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DATE PNMS 2026 — Argeș
+// Completează câmpurile: licitatie ("DA"/"NU"), tip ("calda"/"sandvis"/null),
+// firma (string sau null), valoare (număr lei/an sau null)
+// ══════════════════════════════════════════════════════════════════
+const PNMS = {
+  "Albești de Argeș":   { b: 474,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Albești de Muscel":  { b: 80,   licitatie: null, tip: null, firma: null, valoare: null },
+  "Aninoasa":           { b: 323,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Moșoaia":            { b: 204,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Bălilești":          { b: 296,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Bârla":              { b: 252,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Berevoiești":        { b: 452,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Bogați":             { b: 321,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Bughea de Sus":      { b: 194,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Buzești":            { b: 311,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Cepari":             { b: 132,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Corbeni":            { b: 590,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Davidești":          { b: 280,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Dragoslavele":       { b: 290,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Hârtieștti":         { b: 338,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Leordeni":           { b: 375,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Mălureni":           { b: 523,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Mărăcineni":         { b: 462,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Merișani":           { b: 462,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Micești":            { b: 691,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Mihăești":           { b: 708,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Mozăceni":           { b: 326,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Pietrușani":         { b: 494,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Rucăr":              { b: 692,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Schitu Golești":     { b: 476,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Stoenești":          { b: 367,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Suici":              { b: 172,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Ștefești":           { b: 479,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Ungheni":            { b: 141,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Valea Mare-Pravăț":  { b: 417,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Vedea":              { b: 391,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Vlădești":           { b: 334,  licitatie: null, tip: null, firma: null, valoare: null },
+  "Vulturești":         { b: 281,  licitatie: null, tip: null, firma: null, valoare: null },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ALTERNATIVĂ: citește datele din Google Sheets CSV publicat
+// Decomentează și pune URL-ul după ce publici foaia ca CSV:
+// ══════════════════════════════════════════════════════════════════
+// const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/export?format=csv&gid=0';
+// async function loadFromSheet() {
+//   const r = await fetch(SHEET_CSV_URL);
+//   const text = await r.text();
+//   const rows = text.trim().split('\n').slice(1);
+//   rows.forEach(row => {
+//     const cols = row.split(',');
+//     const comuna = cols[3]?.trim().replace(/"/g,'');
+//     if (PNMS[comuna]) {
+//       PNMS[comuna].licitatie = cols[8]?.trim() || null;
+//       PNMS[comuna].tip       = cols[9]?.trim() || null;
+//       PNMS[comuna].firma     = cols[10]?.trim() || null;
+//       PNMS[comuna].valoare   = parseInt(cols[11]) || null;
+//     }
+//   });
+// }
+
+// ══════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════
+const norm = s => s ? s.toLowerCase()
+  .replace(/[ăâ]/g,'a').replace(/[îí]/g,'i')
+  .replace(/[șş]/g,'s').replace(/[țţ]/g,'t')
+  .replace(/ó/g,'o').replace(/[-\s]+/g,' ').trim() : '';
+
+function matchPnms(rawName) {
+  const nf = norm(rawName);
+  for (const [k] of Object.entries(PNMS)) {
+    const nk = norm(k);
+    if (nf === nk) return k;
+    const short = nk.replace(/^(comuna|municipiul|orasul|oras|satul)\s+/,'');
+    if (nf === short || nf.includes(short) || short.includes(nf)) return k;
+  }
+  return null;
+}
+
+function getColor(d) {
+  if (!d || d.licitatie === null) return '#B4B2A9';
+  if (d.licitatie === 'DA' && d.tip === 'calda')  return '#1D9E75';
+  if (d.licitatie === 'DA' && d.tip === 'sandvis') return '#BA7517';
+  if (d.licitatie === 'DA')  return '#185FA5';
+  if (d.licitatie === 'NU')  return '#E24B4A';
+  return '#B4B2A9';
+}
+
+function matchFilter(d, f) {
+  if (f === 'all') return true;
+  if (f === 'calda')       return d && d.tip === 'calda';
+  if (f === 'sandvis')     return d && d.tip === 'sandvis';
+  if (f === 'licit_da')    return d && d.licitatie === 'DA';
+  if (f === 'licit_nu')    return d && d.licitatie === 'NU';
+  if (f === 'necompletat') return !d || d.licitatie === null;
+  return true;
+}
+
+function fmtNum(n) { return n ? n.toLocaleString('ro-RO') : '—'; }
+
+// ══════════════════════════════════════════════════════════════════
+// STATS & SIDEBAR LIST
+// ══════════════════════════════════════════════════════════════════
+function updateStats() {
+  const vals = Object.values(PNMS);
+  const completate = vals.filter(d => d.licitatie !== null);
+  const cuLicit = vals.filter(d => d.licitatie === 'DA');
+  const totalCopii = vals.reduce((s, d) => s + d.b, 0);
+  document.getElementById('st-total').textContent = vals.length;
+  document.getElementById('st-copii').textContent = fmtNum(totalCopii);
+  document.getElementById('st-licit').textContent = cuLicit.length;
+  document.getElementById('st-pct').textContent = completate.length
+    ? Math.round(completate.length / vals.length * 100) + '%' : '0%';
+
+  // filter counts
+  const fc = {
+    all: vals.length,
+    calda:       vals.filter(d => d.tip === 'calda').length,
+    sandvis:     vals.filter(d => d.tip === 'sandvis').length,
+    licit_da:    vals.filter(d => d.licitatie === 'DA').length,
+    licit_nu:    vals.filter(d => d.licitatie === 'NU').length,
+    necompletat: vals.filter(d => d.licitatie === null).length,
+  };
+  Object.entries(fc).forEach(([k, v]) => {
+    const el = document.getElementById('fc-' + k);
+    if (el) el.textContent = v;
+  });
+}
+
+function buildComuneList() {
+  const el = document.getElementById('comune-list');
+  el.innerHTML = '';
+  Object.entries(PNMS).sort((a,b) => a[0].localeCompare(b[0], 'ro')).forEach(([name, d]) => {
+    const row = document.createElement('div');
+    row.className = 'comuna-row';
+    row.dataset.name = name;
+    row.innerHTML = `
+      <span class="comuna-dot" style="background:${getColor(d)}"></span>
+      <span class="comuna-name">${name}</span>
+      <span class="comuna-beneficiari">${fmtNum(d.b)}</span>
+    `;
+    row.onclick = () => {
+      if (window._comunaLayers && window._comunaLayers[name]) {
+        const layer = window._comunaLayers[name];
+        layer.openPopup();
+        try { map.fitBounds(layer.getBounds(), { maxZoom: 12, padding: [40, 40] }); } catch(e) {}
+      }
+    };
+    el.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MAP
+// ══════════════════════════════════════════════════════════════════
+const map = L.map('map', {
+  center: [44.95, 24.85],
+  zoom: 9,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  maxZoom: 16,
+}).addTo(map);
+
+window._comunaLayers = {};
+let geoLayer = null;
+let currentFilter = 'all';
+
+function styleFeature(feature) {
+  const pName = feature.properties._pnmsName;
+  const d = pName ? PNMS[pName] : null;
+  const inPnms = !!pName;
+  const visible = inPnms && matchFilter(d, currentFilter);
+  return {
+    fillColor: inPnms ? getColor(d) : '#E8E6DE',
+    fillOpacity: visible ? 0.78 : (inPnms ? 0.12 : 0.25),
+    color: visible ? '#fff' : (inPnms ? 'rgba(255,255,255,0.4)' : '#ccc'),
+    weight: visible ? 1.8 : 0.6,
+  };
+}
+
+function makePopup(name, d) {
+  const isIn = !!d;
+  if (!isIn) return `<div class="popup-inner"><div class="popup-header">${name}</div><p style="font-size:12px;color:#888">Nu este în PNMS 2026 Argeș</p></div>`;
+
+  const litBadge = d.licitatie === 'DA'
+    ? '<span class="badge badge-green">DA ✓</span>'
+    : d.licitatie === 'NU'
+    ? '<span class="badge badge-red">NU ✗</span>'
+    : '<span class="badge badge-gray">Necompletat</span>';
+
+  const tipBadge = d.tip === 'calda'
+    ? '<span class="badge badge-green">Mâncare caldă 🍲</span>'
+    : d.tip === 'sandvis'
+    ? '<span class="badge badge-amber">Sandvișuri 🥪</span>'
+    : '<span class="badge badge-gray">Nespecificat</span>';
+
+  return `
+    <div class="popup-inner">
+      <div class="popup-header">${name}</div>
+      <div class="popup-row">
+        <span class="popup-label">Beneficiari PNMS 2026</span>
+        <strong>${fmtNum(d.b)} copii</strong>
+      </div>
+      <div class="popup-row">
+        <span class="popup-label">Licitație PNMS</span>
+        ${litBadge}
+      </div>
+      <div class="popup-row">
+        <span class="popup-label">Tip masă</span>
+        ${tipBadge}
+      </div>
+      ${d.firma ? `<div class="popup-row"><span class="popup-label">Firmă prestatoare</span><span style="font-size:12px">${d.firma}</span></div>` : ''}
+      ${d.valoare ? `<div class="popup-row"><span class="popup-label">Valoare contract</span><strong>${fmtNum(d.valoare)} lei/an</strong></div>` : ''}
+    </div>
+    <div class="popup-footer">Sursă: PNMS 2026 · Asociația Pârleaz · date.parleaz.ro</div>
+  `;
+}
+
+function updateLayerStyles() {
+  if (!geoLayer) return;
+  geoLayer.eachLayer(layer => layer.setStyle(styleFeature(layer.feature)));
+  buildComuneList();
+}
+
+function setFilter(btn) {
+  currentFilter = btn.dataset.filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateLayerStyles();
+}
+
+// ── LOAD GEOJSON VIA OVERPASS ─────────────────────────────────────
+const statusEl = document.getElementById('status-bar');
+
+const overpassQ = `[out:json][timeout:60];
+area["name"="Județul Argeș"]["admin_level"="6"]->.a;
+(relation["boundary"="administrative"]["admin_level"="8"](area.a););
+out geom;`;
+
+fetch('https://overpass-api.de/api/interpreter', {
+  method: 'POST',
+  body: 'data=' + encodeURIComponent(overpassQ),
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+})
+.then(r => r.json())
+.then(data => {
+  const elements = data.elements || [];
+  const features = [];
+  let matched = 0;
+
+  for (const el of elements) {
+    if (el.type !== 'relation') continue;
+    const name = el.tags?.name || '';
+    const pName = matchPnms(name);
+    if (pName) matched++;
+
+    const coords = [];
+    for (const m of (el.members || [])) {
+      if (m.role === 'outer' && m.geometry && m.geometry.length > 2) {
+        coords.push(m.geometry.map(p => [p.lon, p.lat]));
+      }
+    }
+    if (!coords.length) continue;
+
+    features.push({
+      type: 'Feature',
+      properties: { name, _pnmsName: pName },
+      geometry: {
+        type: coords.length === 1 ? 'Polygon' : 'MultiPolygon',
+        coordinates: coords.length === 1 ? coords : coords.map(r => [r])
+      }
+    });
+  }
+
+  statusEl.classList.add('hidden');
+
+  geoLayer = L.geoJSON({ type: 'FeatureCollection', features }, {
+    style: styleFeature,
+    onEachFeature: (feature, layer) => {
+      const pName = feature.properties._pnmsName;
+      const displayName = pName || feature.properties.name;
+      const d = pName ? PNMS[pName] : null;
+
+      layer.bindPopup(() => `<div class="lf-popup-content">${makePopup(displayName, d)}</div>`, {
+        className: 'lf-popup',
+        maxWidth: 300,
+      });
+
+      if (pName) window._comunaLayers[pName] = layer;
+
+      layer.on('mouseover', function(e) {
+        if (feature.properties._pnmsName) {
+          this.setStyle({ weight: 3, fillOpacity: 0.92, color: '#fff' });
+          this.bringToFront();
+        }
+      });
+      layer.on('mouseout', function() {
+        geoLayer.resetStyle(this);
+        this.setStyle(styleFeature(this.feature));
+      });
+    }
+  }).addTo(map);
+
+  try { map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] }); } catch(e) {}
+  updateStats();
+  buildComuneList();
+})
+.catch(err => {
+  statusEl.textContent = 'Eroare la încărcarea hărții — reîncarcă pagina.';
+  statusEl.style.color = '#E24B4A';
+  console.error(err);
+});
+
+// init
+updateStats();
+buildComuneList();
+</script>
+
+</body>
+</html>
