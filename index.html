@@ -693,13 +693,50 @@ function setFilter(btn) {
   updateLayerStyles();
 }
 
-// ── LOAD GEOJSON VIA OVERPASS ─────────────────────────────────────
+// ── ASAMBLARE RING-URI OSM
+function ptEq(a, b) {
+  return a && b && Math.abs(a[0]-b[0]) < 1e-7 && Math.abs(a[1]-b[1]) < 1e-7;
+}
+function assembleRings(segments) {
+  let segs = segments.map(s => [...s]);
+  const rings = [];
+  while (segs.length > 0) {
+    let ring = [...segs.shift()];
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let i = 0; i < segs.length; i++) {
+        const seg = segs[i];
+        const rEnd = ring[ring.length - 1];
+        const rStart = ring[0];
+        if (ptEq(rEnd, seg[0])) {
+          ring = ring.concat(seg.slice(1)); segs.splice(i,1); changed=true; break;
+        } else if (ptEq(rEnd, seg[seg.length-1])) {
+          ring = ring.concat([...seg].reverse().slice(1)); segs.splice(i,1); changed=true; break;
+        } else if (ptEq(rStart, seg[seg.length-1])) {
+          ring = seg.concat(ring.slice(1)); segs.splice(i,1); changed=true; break;
+        } else if (ptEq(rStart, seg[0])) {
+          ring = [...seg].reverse().concat(ring.slice(1)); segs.splice(i,1); changed=true; break;
+        }
+      }
+    }
+    if (!ptEq(ring[0], ring[ring.length-1])) ring.push(ring[0]);
+    if (ring.length >= 4) rings.push(ring);
+  }
+  return rings.length ? rings : [[]];
+}
+
+// ── LOAD GEOJSON VIA OVERPASS
 const statusEl = document.getElementById('status-bar');
 
-const overpassQ = `[out:json][timeout:60];
+// Strategie: cerem relațiile + toate way-urile cu noduri lor complet
+// folosind out body + out skel qt care e mai fiabil pt. comune complexe
+const overpassQ = `[out:json][timeout:90];
 area["name"="Județul Argeș"]["admin_level"="6"]->.a;
-(relation["boundary"="administrative"]["admin_level"="8"](area.a););
-out geom;`;
+rel["boundary"="administrative"]["admin_level"="8"](area.a);
+out body;
+>;
+out skel qt;`;
 
 fetch('https://overpass-api.de/api/interpreter', {
   method: 'POST',
@@ -709,34 +746,52 @@ fetch('https://overpass-api.de/api/interpreter', {
 .then(r => r.json())
 .then(data => {
   const elements = data.elements || [];
+
+  // Indexăm noduri și way-uri
+  const nodes = {};
+  const ways  = {};
+  const rels  = [];
+
+  for (const el of elements) {
+    if (el.type === 'node') nodes[el.id] = [el.lon, el.lat];
+    else if (el.type === 'way') ways[el.id] = el.nodes || [];
+    else if (el.type === 'relation') rels.push(el);
+  }
+
   const features = [];
   let matched = 0;
 
-  for (const el of elements) {
-    if (el.type !== 'relation') continue;
-    const name = el.tags?.name || '';
+  for (const rel of rels) {
+    const name = rel.tags?.name || '';
     const pName = matchPnms(name);
     if (pName) matched++;
 
-    const coords = [];
-    for (const m of (el.members || [])) {
-      if (m.role === 'outer' && m.geometry && m.geometry.length > 2) {
-        coords.push(m.geometry.map(p => [p.lon, p.lat]));
-      }
+    // Colectăm ring-urile outer
+    const outerRings = [];
+    for (const m of (rel.members || [])) {
+      if (m.type !== 'way' || m.role !== 'outer') continue;
+      const nodeIds = ways[m.ref];
+      if (!nodeIds || nodeIds.length < 3) continue;
+      const ring = nodeIds.map(id => nodes[id]).filter(Boolean);
+      if (ring.length >= 3) outerRings.push(ring);
     }
-    if (!coords.length) continue;
+
+    if (!outerRings.length) continue;
+
+    // Asamblăm ring-urile în poligoane (unim segmentele adiacente)
+    const assembled = assembleRings(outerRings);
 
     features.push({
       type: 'Feature',
       properties: { name, _pnmsName: pName },
-      geometry: {
-        type: coords.length === 1 ? 'Polygon' : 'MultiPolygon',
-        coordinates: coords.length === 1 ? coords : coords.map(r => [r])
-      }
+      geometry: assembled.length === 1
+        ? { type: 'Polygon', coordinates: assembled }
+        : { type: 'MultiPolygon', coordinates: assembled.map(r => [r]) }
     });
   }
 
-  statusEl.classList.add('hidden');
+  statusEl.textContent = `${rels.length} comune Argeș · ${matched} în PNMS identificate`;
+  setTimeout(() => statusEl.classList.add('hidden'), 3000);
 
   geoLayer = L.geoJSON({ type: 'FeatureCollection', features }, {
     style: styleFeature,
