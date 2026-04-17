@@ -709,15 +709,10 @@ function assembleRings(segments) {
         const seg = segs[i];
         const rEnd = ring[ring.length - 1];
         const rStart = ring[0];
-        if (ptEq(rEnd, seg[0])) {
-          ring = ring.concat(seg.slice(1)); segs.splice(i,1); changed=true; break;
-        } else if (ptEq(rEnd, seg[seg.length-1])) {
-          ring = ring.concat([...seg].reverse().slice(1)); segs.splice(i,1); changed=true; break;
-        } else if (ptEq(rStart, seg[seg.length-1])) {
-          ring = seg.concat(ring.slice(1)); segs.splice(i,1); changed=true; break;
-        } else if (ptEq(rStart, seg[0])) {
-          ring = [...seg].reverse().concat(ring.slice(1)); segs.splice(i,1); changed=true; break;
-        }
+        if (ptEq(rEnd, seg[0])) { ring = ring.concat(seg.slice(1)); segs.splice(i,1); changed=true; break; }
+        else if (ptEq(rEnd, seg[seg.length-1])) { ring = ring.concat([...seg].reverse().slice(1)); segs.splice(i,1); changed=true; break; }
+        else if (ptEq(rStart, seg[seg.length-1])) { ring = seg.concat(ring.slice(1)); segs.splice(i,1); changed=true; break; }
+        else if (ptEq(rStart, seg[0])) { ring = [...seg].reverse().concat(ring.slice(1)); segs.splice(i,1); changed=true; break; }
       }
     }
     if (!ptEq(ring[0], ring[ring.length-1])) ring.push(ring[0]);
@@ -726,88 +721,38 @@ function assembleRings(segments) {
   return rings.length ? rings : [[]];
 }
 
-// ── LOAD GEOJSON VIA OVERPASS
+// ── GEOJSON FALLBACK (poligoane aproximative, garantat funcțional)
+const FALLBACK_GEOJSON = {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"name":"Albești de Argeș"},"geometry":{"type":"Polygon","coordinates":[[[24.925662,44.765],[24.929951,44.780307],[24.942163,44.793284],[24.96044,44.801955],[24.982,44.805],[25.00356,44.801955],[25.021837,44.793284],[25.034049,44.780307],[25.038338,44.765],[25.034049,44.749693],[25.021837,44.736716],[25.00356,44.728045],[24.982,44.725],[24.96044,44.728045],[24.942163,44.736716],[24.929951,44.749693],[24.925662,44.765]]]}},{"type":"Feature","properties":{"name":"Albești de Muscel"},"geometry":{"type":"Polygon","coordinates":[[[25.004527,45.19],[25.007227,45.199567],[25.014917,45.207678],[25.026425,45.213097],[25.04,45.215],[25.053575,45.213097],[25.065083,45.207678],[25.072773,45.199567],[25.075473,45.19],[25.072773,45.180433],[25.065083,45.172322],[25.053575,45.166903],[25.04,45.165],[25.026425,45.166903],[25.014917,45.172322],[25.007227,45.180433],[25.004527,45.19]]]}},{"type":"Feature","properties":{"name":"Aninoasa"},"geometry":{"type":"Polygon","coordinates":[[[24.962511,45.085],[24.965745,45.096481],[24.974955,45.106213],[24.98874,45.112716],[25.005,45.115],[25.02126,45.112716],[25.035045,45.106213],[25.044255,45.096481],[25.047489,45.085],[25.044255,45.073519],[25.035045,45.063787],[25.02126,45.057284],[25.005,45.055],[24.98874,45.057284],[24.974955,45.063787],[24.965745,45.073519],[24.962511,45.085]]]}},{"type":"Feature","properties":{"name":"Moșoaia"},"geometry":{"type":"Polygon","coordinates":[[[24.775495,44.865],[24.778502,44.875715],[24.787066,44.884799],[24.799882,44.890869],[24.815,44.893],[24.830118,44.890869],[24.842934,44.884799],[24.851498,44.875715],[24.854505,44.865],[24.851498,44.854285],[24.842934,44.845201],[24.830118,44.839131],[24.815,44.837],[24.799882,44.839131],[24.787066,44.845201],[24.778502,44.854285],[24.775495,44.865]]]}},{"type":"Feature","properties":{"name":"Bălilești"},"geometry":{"type":"Polygon","coordinates":[[[24.72073,44.735],[24.72448,44.748394],[24.735161,44.759749],[24.751145,44.767336],[24.77,44.77],[24.788855,44.767336],[24.804839,44.759749],[24.81552,44.748394],[24.81927,44.735],[24.81552,44.721606],[24.804839,44.710251],[24.788855,44.702664],[24.77,44.7],[24.751145,44.702664],[24.735161,44.710251],[24.72448,44.721606],[24.72073,44.735]]]}},{"type":"Feature","properties":{"name":"Bârla"},"geometry":{"type":"Polygon","coordinates":[[[24.678808,44.615],[24.683085,44.630307],[24.695266,44.643284],[24.713496,44.651955],[24.735,44.655],[24.756504,44.651955],[24.774734,44.643284],[24.786915,44.630307],[24.791192,44.615],[24.786915,44.599693],[24.774734,44.586716],[24.756504,44.578045],[24.735,44.575],[24.713496,44.578045],[24.695266,44.586716],[24.683085,44.599693],[24.678808,44.615]]]}},{"type":"Feature","properties":{"name":"Berevoiești"},"geometry":{"type":"Polygon","coordinates":[[[24.972428,45.195],[24.975669,45.206481],[24.984897,45.216213],[24.998709,45.222716],[25.015,45.225],[25.031291,45.222716],[25.045103,45.216213],[25.054331,45.206481],[25.057572,45.195],[25.054331,45.183519],[25.045103,45.173787],[25.031291,45.167284],[25.015,45.165],[24.998709,45.167284],[24.984897,45.173787],[24.975669,45.183519],[24.972428,45.195]]]}},{"type":"Feature","properties":{"name":"Bogați"},"geometry":{"type":"Polygon","coordinates":[[[24.916548,44.69],[24.920617,44.704542],[24.932204,44.71687],[24.949545,44.725107],[24.97,44.728],[24.990455,44.725107],[25.007796,44.71687],[25.019383,44.704542],[25.023452,44.69],[25.019383,44.675458],[25.007796,44.66313],[24.990455,44.654893],[24.97,44.652],[24.949545,44.654893],[24.932204,44.66313],[24.920617,44.675458],[24.916548,44.69]]]}},{"type":"Feature","properties":{"name":"Bughea de Sus"},"geometry":{"type":"Polygon","coordinates":[[[25.048767,45.22],[25.051145,45.228419],[25.057915,45.235556],[25.068048,45.240325],[25.08,45.242],[25.091952,45.240325],[25.102085,45.235556],[25.108855,45.228419],[25.111233,45.22],[25.108855,45.211581],[25.102085,45.204444],[25.091952,45.199675],[25.08,45.198],[25.068048,45.199675],[25.057915,45.204444],[25.051145,45.211581],[25.048767,45.22]]]}},{"type":"Feature","properties":{"name":"Buzești"},"geometry":{"type":"Polygon","coordinates":[[[24.595806,44.645],[24.599551,44.658394],[24.610215,44.669749],[24.626174,44.677336],[24.645,44.68],[24.663826,44.677336],[24.679785,44.669749],[24.690449,44.658394],[24.694194,44.645],[24.690449,44.631606],[24.679785,44.620251],[24.663826,44.612664],[24.645,44.61],[24.626174,44.612664],[24.610215,44.620251],[24.599551,44.631606],[24.595806,44.645]]]}},{"type":"Feature","properties":{"name":"Cepari"},"geometry":{"type":"Polygon","coordinates":[[[24.572699,44.83],[24.575919,44.841481],[24.585089,44.851213],[24.598812,44.857716],[24.615,44.86],[24.631188,44.857716],[24.644911,44.851213],[24.654081,44.841481],[24.657301,44.83],[24.654081,44.818519],[24.644911,44.808787],[24.631188,44.802284],[24.615,44.8],[24.598812,44.802284],[24.585089,44.808787],[24.575919,44.818519],[24.572699,44.83]]]}},{"type":"Feature","properties":{"name":"Corbeni"},"geometry":{"type":"Polygon","coordinates":[[[24.821131,45.205],[24.825993,45.222221],[24.839838,45.23682],[24.860559,45.246575],[24.885,45.25],[24.909441,45.246575],[24.930162,45.23682],[24.944007,45.222221],[24.948869,45.205],[24.944007,45.187779],[24.930162,45.17318],[24.909441,45.163425],[24.885,45.16],[24.860559,45.163425],[24.839838,45.17318],[24.825993,45.187779],[24.821131,45.205]]]}},{"type":"Feature","properties":{"name":"Davidești"},"geometry":{"type":"Polygon","coordinates":[[[24.910423,44.97],[24.913435,44.980715],[24.922015,44.989799],[24.934854,44.995869],[24.95,44.998],[24.965146,44.995869],[24.977985,44.989799],[24.986565,44.980715],[24.989577,44.97],[24.986565,44.959285],[24.977985,44.950201],[24.965146,44.944131],[24.95,44.942],[24.934854,44.944131],[24.922015,44.950201],[24.913435,44.959285],[24.910423,44.97]]]}},{"type":"Feature","properties":{"name":"Dragoslavele"},"geometry":{"type":"Polygon","coordinates":[[[25.042301,45.365],[25.045551,45.376481],[25.054807,45.386213],[25.06866,45.392716],[25.085,45.395],[25.10134,45.392716],[25.115193,45.386213],[25.124449,45.376481],[25.127699,45.365],[25.124449,45.353519],[25.115193,45.343787],[25.10134,45.337284],[25.085,45.335],[25.06866,45.337284],[25.054807,45.343787],[25.045551,45.353519],[25.042301,45.365]]]}},{"type":"Feature","properties":{"name":"Hârtieștti"},"geometry":{"type":"Polygon","coordinates":[[[24.805755,44.705],[24.809504,44.718394],[24.820179,44.729749],[24.836155,44.737336],[24.855,44.74],[24.873845,44.737336],[24.889821,44.729749],[24.900496,44.718394],[24.904245,44.705],[24.900496,44.691606],[24.889821,44.680251],[24.873845,44.672664],[24.855,44.67],[24.836155,44.672664],[24.820179,44.680251],[24.809504,44.691606],[24.805755,44.705]]]}},{"type":"Feature","properties":{"name":"Leordeni"},"geometry":{"type":"Polygon","coordinates":[[[24.899906,44.795],[24.903339,44.807246],[24.913114,44.817627],[24.927743,44.824564],[24.945,44.827],[24.962257,44.824564],[24.976886,44.817627],[24.986661,44.807246],[24.990094,44.795],[24.986661,44.782754],[24.976886,44.772373],[24.962257,44.765436],[24.945,44.763],[24.927743,44.765436],[24.913114,44.772373],[24.903339,44.782754],[24.899906,44.795]]]}},{"type":"Feature","properties":{"name":"Mălureni"},"geometry":{"type":"Polygon","coordinates":[[[24.811339,44.915],[24.815424,44.929542],[24.827056,44.94187],[24.844465,44.950107],[24.865,44.953],[24.885535,44.950107],[24.902944,44.94187],[24.914576,44.929542],[24.918661,44.915],[24.914576,44.900458],[24.902944,44.88813],[24.885535,44.879893],[24.865,44.877],[24.844465,44.879893],[24.827056,44.88813],[24.815424,44.900458],[24.811339,44.915]]]}},{"type":"Feature","properties":{"name":"Mărăcineni"},"geometry":{"type":"Polygon","coordinates":[[[24.844691,44.925],[24.847379,44.934567],[24.855033,44.942678],[24.866488,44.948097],[24.88,44.95],[24.893512,44.948097],[24.904967,44.942678],[24.912621,44.934567],[24.915309,44.925],[24.912621,44.915433],[24.904967,44.907322],[24.893512,44.901903],[24.88,44.9],[24.866488,44.901903],[24.855033,44.907322],[24.847379,44.915433],[24.844691,44.925]]]}},{"type":"Feature","properties":{"name":"Merișani"},"geometry":{"type":"Polygon","coordinates":[[[24.739828,44.895],[24.743266,44.907246],[24.753058,44.917627],[24.767713,44.924564],[24.785,44.927],[24.802287,44.924564],[24.816942,44.917627],[24.826734,44.907246],[24.830172,44.895],[24.826734,44.882754],[24.816942,44.872373],[24.802287,44.865436],[24.785,44.863],[24.767713,44.865436],[24.753058,44.872373],[24.743266,44.882754],[24.739828,44.895]]]}},{"type":"Feature","properties":{"name":"Micești"},"geometry":{"type":"Polygon","coordinates":[[[24.792644,44.905],[24.795868,44.916481],[24.80505,44.926213],[24.818791,44.932716],[24.835,44.935],[24.851209,44.932716],[24.86495,44.926213],[24.874132,44.916481],[24.877356,44.905],[24.874132,44.893519],[24.86495,44.883787],[24.851209,44.877284],[24.835,44.875],[24.818791,44.877284],[24.80505,44.883787],[24.795868,44.893519],[24.792644,44.905]]]}},{"type":"Feature","properties":{"name":"Mihăești"},"geometry":{"type":"Polygon","coordinates":[[[24.62147,44.775],[24.625544,44.789542],[24.637148,44.80187],[24.654515,44.810107],[24.675,44.813],[24.695485,44.810107],[24.712852,44.80187],[24.724456,44.789542],[24.72853,44.775],[24.724456,44.760458],[24.712852,44.74813],[24.695485,44.739893],[24.675,44.737],[24.654515,44.739893],[24.637148,44.74813],[24.625544,44.760458],[24.62147,44.775]]]}},{"type":"Feature","properties":{"name":"Mozăceni"},"geometry":{"type":"Polygon","coordinates":[[[24.83584,44.605],[24.839582,44.618394],[24.850239,44.629749],[24.866187,44.637336],[24.885,44.64],[24.903813,44.637336],[24.919761,44.629749],[24.930418,44.618394],[24.93416,44.605],[24.930418,44.591606],[24.919761,44.580251],[24.903813,44.572664],[24.885,44.57],[24.866187,44.572664],[24.850239,44.580251],[24.839582,44.591606],[24.83584,44.605]]]}},{"type":"Feature","properties":{"name":"Pietrușani"},"geometry":{"type":"Polygon","coordinates":[[[24.858788,44.635],[24.863067,44.650307],[24.875252,44.663284],[24.893489,44.671955],[24.915,44.675],[24.936511,44.671955],[24.954748,44.663284],[24.966933,44.650307],[24.971212,44.635],[24.966933,44.619693],[24.954748,44.606716],[24.936511,44.598045],[24.915,44.595],[24.893489,44.598045],[24.875252,44.606716],[24.863067,44.619693],[24.858788,44.635]]]}},{"type":"Feature","properties":{"name":"Rucăr"},"geometry":{"type":"Polygon","coordinates":[[[25.108053,45.38],[25.112387,45.395307],[25.124732,45.408284],[25.143207,45.416955],[25.165,45.42],[25.186793,45.416955],[25.205268,45.408284],[25.217613,45.395307],[25.221947,45.38],[25.217613,45.364693],[25.205268,45.351716],[25.186793,45.343045],[25.165,45.34],[25.143207,45.343045],[25.124732,45.351716],[25.112387,45.364693],[25.108053,45.38]]]}},{"type":"Feature","properties":{"name":"Schitu Golești"},"geometry":{"type":"Polygon","coordinates":[[[24.869789,44.945],[24.87323,44.957246],[24.883031,44.967627],[24.897698,44.974564],[24.915,44.977],[24.932302,44.974564],[24.946969,44.967627],[24.95677,44.957246],[24.960211,44.945],[24.95677,44.932754],[24.946969,44.922373],[24.932302,44.915436],[24.915,44.913],[24.897698,44.915436],[24.883031,44.922373],[24.87323,44.932754],[24.869789,44.945]]]}},{"type":"Feature","properties":{"name":"Stoenești"},"geometry":{"type":"Polygon","coordinates":[[[24.555738,44.725],[24.559488,44.738394],[24.570167,44.749749],[24.586148,44.757336],[24.605,44.76],[24.623852,44.757336],[24.639833,44.749749],[24.650512,44.738394],[24.654262,44.725],[24.650512,44.711606],[24.639833,44.700251],[24.623852,44.692664],[24.605,44.69],[24.586148,44.692664],[24.570167,44.700251],[24.559488,44.711606],[24.555738,44.725]]]}},{"type":"Feature","properties":{"name":"Suici"},"geometry":{"type":"Polygon","coordinates":[[[24.542658,44.885],[24.545882,44.896481],[24.55506,44.906213],[24.568797,44.912716],[24.585,44.915],[24.601203,44.912716],[24.61494,44.906213],[24.624118,44.896481],[24.627342,44.885],[24.624118,44.873519],[24.61494,44.863787],[24.601203,44.857284],[24.585,44.855],[24.568797,44.857284],[24.55506,44.863787],[24.545882,44.873519],[24.542658,44.885]]]}},{"type":"Feature","properties":{"name":"Ștefești"},"geometry":{"type":"Polygon","coordinates":[[[24.955516,44.835],[24.958521,44.845715],[24.96708,44.854799],[24.97989,44.860869],[24.995,44.863],[25.01011,44.860869],[25.02292,44.854799],[25.031479,44.845715],[25.034484,44.835],[25.031479,44.824285],[25.02292,44.815201],[25.01011,44.809131],[24.995,44.807],[24.97989,44.809131],[24.96708,44.815201],[24.958521,44.824285],[24.955516,44.835]]]}},{"type":"Feature","properties":{"name":"Ungheni"},"geometry":{"type":"Polygon","coordinates":[[[24.682732,44.785],[24.685949,44.796481],[24.695112,44.806213],[24.708825,44.812716],[24.725,44.815],[24.741175,44.812716],[24.754888,44.806213],[24.764051,44.796481],[24.767268,44.785],[24.764051,44.773519],[24.754888,44.763787],[24.741175,44.757284],[24.725,44.755],[24.708825,44.757284],[24.695112,44.763787],[24.685949,44.773519],[24.682732,44.785]]]}},{"type":"Feature","properties":{"name":"Valea Mare-Pravăț"},"geometry":{"type":"Polygon","coordinates":[[[24.901236,45.025],[24.905329,45.039542],[24.916983,45.05187],[24.934426,45.060107],[24.955,45.063],[24.975574,45.060107],[24.993017,45.05187],[25.004671,45.039542],[25.008764,45.025],[25.004671,45.010458],[24.993017,44.99813],[24.975574,44.989893],[24.955,44.987],[24.934426,44.989893],[24.916983,44.99813],[24.905329,45.010458],[24.901236,45.025]]]}},{"type":"Feature","properties":{"name":"Vedea"},"geometry":{"type":"Polygon","coordinates":[[[24.726029,44.585],[24.730518,44.601073],[24.743301,44.614698],[24.762433,44.623803],[24.785,44.627],[24.807567,44.623803],[24.826699,44.614698],[24.839482,44.601073],[24.843971,44.585],[24.839482,44.568927],[24.826699,44.555302],[24.807567,44.546197],[24.785,44.543],[24.762433,44.546197],[24.743301,44.555302],[24.730518,44.568927],[24.726029,44.585]]]}},{"type":"Feature","properties":{"name":"Vlădești"},"geometry":{"type":"Polygon","coordinates":[[[24.609859,44.855],[24.613295,44.867246],[24.623081,44.877627],[24.637725,44.884564],[24.655,44.887],[24.672275,44.884564],[24.686919,44.877627],[24.696705,44.867246],[24.700141,44.855],[24.696705,44.842754],[24.686919,44.832373],[24.672275,44.825436],[24.655,44.823],[24.637725,44.825436],[24.623081,44.832373],[24.613295,44.842754],[24.609859,44.855]]]}},{"type":"Feature","properties":{"name":"Vulturești"},"geometry":{"type":"Polygon","coordinates":[[[24.655747,44.715],[24.659496,44.728394],[24.670173,44.739749],[24.686152,44.747336],[24.705,44.75],[24.723848,44.747336],[24.739827,44.739749],[24.750504,44.728394],[24.754253,44.715],[24.750504,44.701606],[24.739827,44.690251],[24.723848,44.682664],[24.705,44.68],[24.686152,44.682664],[24.670173,44.690251],[24.659496,44.701606],[24.655747,44.715]]]}}]};
+
+// ── RENDER LAYER ─────────────────────────────────────────────────────
 const statusEl = document.getElementById('status-bar');
 
-// Strategie: cerem relațiile + toate way-urile cu noduri lor complet
-// folosind out body + out skel qt care e mai fiabil pt. comune complexe
-const overpassQ = `[out:json][timeout:90];
-area["name"="Județul Argeș"]["admin_level"="6"]->.a;
-rel["boundary"="administrative"]["admin_level"="8"](area.a);
-out body;
->;
-out skel qt;`;
-
-fetch('https://overpass-api.de/api/interpreter', {
-  method: 'POST',
-  body: 'data=' + encodeURIComponent(overpassQ),
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-})
-.then(r => r.json())
-.then(data => {
-  const elements = data.elements || [];
-
-  // Indexăm noduri și way-uri
-  const nodes = {};
-  const ways  = {};
-  const rels  = [];
-
-  for (const el of elements) {
-    if (el.type === 'node') nodes[el.id] = [el.lon, el.lat];
-    else if (el.type === 'way') ways[el.id] = el.nodes || [];
-    else if (el.type === 'relation') rels.push(el);
-  }
-
-  const features = [];
+function renderGeoJSON(geojsonData, source) {
+  const features = geojsonData.features || [];
   let matched = 0;
 
-  for (const rel of rels) {
-    const name = rel.tags?.name || '';
-    const pName = matchPnms(name);
+  // Asociem fiecare feature cu datele PNMS
+  features.forEach(f => {
+    const rawName = f.properties.name || f.properties.NAME || f.properties.name_ro || '';
+    const pName = matchPnms(rawName);
+    f.properties._pnmsName = pName;
     if (pName) matched++;
+  });
 
-    // Colectăm ring-urile outer
-    const outerRings = [];
-    for (const m of (rel.members || [])) {
-      if (m.type !== 'way' || m.role !== 'outer') continue;
-      const nodeIds = ways[m.ref];
-      if (!nodeIds || nodeIds.length < 3) continue;
-      const ring = nodeIds.map(id => nodes[id]).filter(Boolean);
-      if (ring.length >= 3) outerRings.push(ring);
-    }
+  statusEl.textContent = `${features.length} comune Argeș · ${matched} din PNMS identificate · sursă: ${source}`;
+  setTimeout(() => statusEl.classList.add('hidden'), 4000);
 
-    if (!outerRings.length) continue;
-
-    // Asamblăm ring-urile în poligoane (unim segmentele adiacente)
-    const assembled = assembleRings(outerRings);
-
-    features.push({
-      type: 'Feature',
-      properties: { name, _pnmsName: pName },
-      geometry: assembled.length === 1
-        ? { type: 'Polygon', coordinates: assembled }
-        : { type: 'MultiPolygon', coordinates: assembled.map(r => [r]) }
-    });
-  }
-
-  statusEl.textContent = `${rels.length} comune Argeș · ${matched} în PNMS identificate`;
-  setTimeout(() => statusEl.classList.add('hidden'), 3000);
-
-  geoLayer = L.geoJSON({ type: 'FeatureCollection', features }, {
+  geoLayer = L.geoJSON(geojsonData, {
     style: styleFeature,
     onEachFeature: (feature, layer) => {
       const pName = feature.properties._pnmsName;
-      const displayName = pName || feature.properties.name;
+      const displayName = pName || feature.properties.name || '';
       const d = pName ? PNMS[pName] : null;
-
-      layer.bindPopup(() => `<div class="lf-popup-content">${makePopup(displayName, d)}</div>`, {
-        className: 'lf-popup',
-        maxWidth: 300,
+      layer.bindPopup(() => makePopup(displayName, d), {
+        className: 'lf-popup', maxWidth: 300,
       });
-
       if (pName) window._comunaLayers[pName] = layer;
-
-      layer.on('mouseover', function(e) {
+      layer.on('mouseover', function() {
         if (feature.properties._pnmsName) {
           this.setStyle({ weight: 3, fillOpacity: 0.92, color: '#fff' });
           this.bringToFront();
@@ -823,11 +768,68 @@ fetch('https://overpass-api.de/api/interpreter', {
   try { map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] }); } catch(e) {}
   updateStats();
   buildComuneList();
+}
+
+// ── ÎNCEARCĂ OVERPASS, FALLBACK LA INLINE ──────────────────────────
+// Query corect: admin_level=4 pentru județe în OSM România
+const overpassQ = `[out:json][timeout:60];
+area["name"="Argeș"]["admin_level"="4"]->.a;
+rel["boundary"="administrative"]["admin_level"="8"](area.a);
+out body;
+>;
+out skel qt;`;
+
+statusEl.textContent = 'Se încearcă încărcarea limitelor din OpenStreetMap...';
+
+fetch('https://overpass-api.de/api/interpreter', {
+  method: 'POST',
+  body: 'data=' + encodeURIComponent(overpassQ),
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+})
+.then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+.then(data => {
+  const elements = data.elements || [];
+  const nodes = {}, ways = {}, rels = [];
+  for (const el of elements) {
+    if (el.type === 'node') nodes[el.id] = [el.lon, el.lat];
+    else if (el.type === 'way') ways[el.id] = el.nodes || [];
+    else if (el.type === 'relation') rels.push(el);
+  }
+
+  const features = [];
+  for (const rel of rels) {
+    const name = rel.tags?.name || '';
+    const outerRings = [];
+    for (const m of (rel.members || [])) {
+      if (m.type !== 'way' || m.role !== 'outer') continue;
+      const nodeIds = ways[m.ref];
+      if (!nodeIds || nodeIds.length < 3) continue;
+      const ring = nodeIds.map(id => nodes[id]).filter(Boolean);
+      if (ring.length >= 3) outerRings.push(ring);
+    }
+    if (!outerRings.length) continue;
+    const assembled = assembleRings(outerRings);
+    features.push({
+      type: 'Feature',
+      properties: { name, _pnmsName: null },
+      geometry: {
+        type: assembled.length === 1 ? 'Polygon' : 'MultiPolygon',
+        coordinates: assembled.length === 1 ? assembled : assembled.map(r => [r])
+      }
+    });
+  }
+
+  if (features.length >= 10) {
+    renderGeoJSON({ type: 'FeatureCollection', features }, 'OpenStreetMap');
+  } else {
+    console.warn('Overpass a returnat prea puține comune (' + features.length + '), folosesc fallback');
+    renderGeoJSON(FALLBACK_GEOJSON, 'date aproximative');
+  }
 })
 .catch(err => {
-  statusEl.textContent = 'Eroare la încărcarea hărții — reîncarcă pagina.';
-  statusEl.style.color = '#E24B4A';
-  console.error(err);
+  console.warn('Overpass indisponibil:', err.message, '— folosesc date aproximative');
+  statusEl.textContent = 'Se folosesc date aproximative (OpenStreetMap indisponibil)...';
+  renderGeoJSON(FALLBACK_GEOJSON, 'date aproximative');
 });
 
 // init
